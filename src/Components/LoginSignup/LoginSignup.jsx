@@ -5,6 +5,7 @@ import password_icon from "../../assets/password.png";
 import user_icon from "../../assets/person.png";
 import { ToastContainer, toast } from "react-toastify";
 import { isEmail } from "validator";
+import Navbar from "../Navbar/Navbar";
 
 function LoginSignup() {
   const [action, setAction] = useState("Signup");
@@ -12,19 +13,36 @@ function LoginSignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
-    console.log("data: ", data);
+
     if (validateInputs()) {
-      console.log("Form is valid");
-    } else return;
+      const payload = { fullName, email, password };
+      try {
+        const data = await postMethod(
+          action === "Signup"
+            ? "http://localhost:3001/signup"
+            : "http://localhost:3001/login",
+          payload
+        );
+        if (data?.success) {
+          toast.success(data?.message || "Signup successful");
+          setFullName("");
+          setEmail("");
+          setPassword("");
+        } else {
+          toast.error(data?.message || "Signup failed");
+        }
+      } catch (error) {
+        console.error("Error during signup:", error);
+        toast.error("Something went wrong");
+      }
+    }
+  };
 
-    const payload = { fullName, email, password };
-
+  const postMethod = async (url, payload) => {
     try {
-      const response = fetch("http://localhost:3001/signup", {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -32,15 +50,29 @@ function LoginSignup() {
         body: JSON.stringify(payload),
       });
 
-      if (response?.success) {
-        toast.success(response?.message);
-        setFullName("");
-        setEmail("");
-        setPassword("");
-      } else {
-        toast.error(response?.message);
-      }
-    } catch (error) {}
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error in postMethod:", error);
+      throw error;
+    }
+  };
+  const getMethod = async (url, payload) => {
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error in postMethod:", error);
+      throw error;
+    }
   };
 
   function validateInputs() {
@@ -68,7 +100,6 @@ function LoginSignup() {
     }
     return true;
   }
-
   const isFormValid =
     action === "Signup" ? fullName && email && password : email && password;
 
@@ -85,6 +116,7 @@ function LoginSignup() {
 
   return (
     <>
+    <Navbar/>
       <div className="container">
         <div className="header">
           <div className="text">
