@@ -116,7 +116,6 @@ function LoginSignup() {
 
   return (
     <>
-    <Navbar/>
       <div className="container">
         <div className="header">
           <div className="text">
