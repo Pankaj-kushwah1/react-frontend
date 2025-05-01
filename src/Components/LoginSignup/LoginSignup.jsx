@@ -5,14 +5,14 @@ import password_icon from "../../assets/password.png";
 import user_icon from "../../assets/person.png";
 import { ToastContainer, toast } from "react-toastify";
 import { isEmail } from "validator";
-import Navbar from "../Navbar/Navbar";
+import { postMethod } from "../../services/postRequest";
 
 function LoginSignup() {
   const [action, setAction] = useState("Signup");
+  document.title = action === "Signup" ? "Sign Up" : "Login";
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -20,16 +20,32 @@ function LoginSignup() {
       const payload = { fullName, email, password };
       try {
         const data = await postMethod(
+      
           action === "Signup"
             ? "http://localhost:3001/signup"
             : "http://localhost:3001/login",
           payload
         );
+
+        console.log('data: ', data);
         if (data?.success) {
           toast.success(data?.message || "Signup successful");
+          const {user,token} = data;    
+          if(token){
+            localStorage.setItem("user", JSON.stringify(user));
+            localStorage.setItem("token", JSON.stringify(token));
+            window.location.href="/dashboard"; 
+
+          }
           setFullName("");
           setEmail("");
           setPassword("");
+          if (action === "Signup") {
+            setAction("Login");
+          } else {
+            // Redirect to dashboard or home page
+            // window.location.href = "/dashboard"; // Change this to your desired route
+          }
         } else {
           toast.error(data?.message || "Signup failed");
         }
@@ -40,29 +56,14 @@ function LoginSignup() {
     }
   };
 
-  const postMethod = async (url, payload) => {
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error in postMethod:", error);
-      throw error;
-    }
-  };
+ 
   const getMethod = async (url, payload) => {
     try {
       const response = await fetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });
